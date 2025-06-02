@@ -18,8 +18,10 @@ export interface Comment {
 const Index: React.FC = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confessionCount, setConfessionCount] = useState<number | null>(null);
   const { toast } = useToast();
 
+  // Fetch the most recent 30 comments (including replies)
   const fetchComments = async () => {
     try {
       console.log('Fetching comments...');
@@ -27,7 +29,7 @@ const Index: React.FC = () => {
         .from('comments')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(15); // <-- Only the most recent 30
+        .limit(30); // Only the most recent 30
 
       if (error) {
         console.error('Error fetching comments:', error);
@@ -48,15 +50,16 @@ const Index: React.FC = () => {
     }
   };
 
-  // Fetch confession count (excluding replies)
+  // Fetch total confession count (including replies)
   const fetchConfessionCount = async () => {
     const { count, error } = await supabase
       .from('comments')
-      .select('*', { count: 'exact', head: true }); // No .is('parent_id', null)
+      .select('*', { count: 'exact', head: true });
 
     if (!error) setConfessionCount(count ?? 0);
   };
 
+  // Add a new confession
   const addComment = async (title: string, content: string) => {
     try {
       console.log('Adding comment:', { title, content });
@@ -77,32 +80,21 @@ const Index: React.FC = () => {
       }
 
       console.log('Comment added:', data);
-      setComments(prev => [data, ...prev]);
+      setComments(prev => [data, ...prev].slice(0, 30)); // Keep only the latest 30
       toast({
         title: "Success",
         description: "Your confession has been shared anonymously",
       });
-      fetchConfessionCount(); // <-- Add this line
+      fetchConfessionCount();
     } catch (error) {
       console.error('Error adding comment:', error);
     }
   };
 
-  const fetchConfessionCount = async () => {
-    const { count, error } = await supabase
-      .from('comments')
-      .select('*', { count: 'exact', head: true });
-
-    if (!error) setConfessionCount(count ?? 0);
-  };
-
   useEffect(() => {
-    console.log('Index component mounted, fetching comments...');
     fetchComments();
     fetchConfessionCount();
   }, []);
-
-  console.log('Index component rendering, loading:', loading, 'comments:', comments.length);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 relative overflow-hidden">
@@ -128,6 +120,11 @@ const Index: React.FC = () => {
         <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-2 drop-shadow-lg">
           SRM Confessions
         </h1>
+        <p className="text-indigo-200/70 text-lg drop-shadow-sm">
+          {confessionCount !== null
+            ? `${confessionCount} confessions shared`
+            : 'Loading confessions count...'}
+        </p>
         <p className="text-indigo-200/70 text-lg drop-shadow-sm">Share your thoughts anonymously in floating bubbles</p>
       </div>
 
