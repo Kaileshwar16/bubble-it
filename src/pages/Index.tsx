@@ -19,20 +19,18 @@ const Index: React.FC = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [confessionCount, setConfessionCount] = useState<number | null>(null);
+  const [bubbleLimit, setBubbleLimit] = useState(20);
   const { toast } = useToast();
 
-  // Fetch the most recent 30 comments (including replies)
   const fetchComments = async () => {
     try {
-      console.log('Fetching comments...');
       const { data, error } = await supabase
         .from('comments')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(30); // Only the most recent 30
+        .limit(30); // Fetch recent 30 to allow filtering by screen size
 
       if (error) {
-        console.error('Error fetching comments:', error);
         toast({
           title: "Error",
           description: "Failed to load comments",
@@ -41,7 +39,6 @@ const Index: React.FC = () => {
         return;
       }
 
-      console.log('Comments fetched:', data);
       setComments(data || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -50,19 +47,8 @@ const Index: React.FC = () => {
     }
   };
 
-  // Fetch total confession count (including replies)
-  const fetchConfessionCount = async () => {
-    const { count, error } = await supabase
-      .from('comments')
-      .select('*', { count: 'exact', head: true });
-
-    if (!error) setConfessionCount(count ?? 0);
-  };
-
-  // Add a new confession
   const addComment = async (title: string, content: string) => {
     try {
-      console.log('Adding comment:', { title, content });
       const { data, error } = await supabase
         .from('comments')
         .insert([{ title, content }])
@@ -70,7 +56,6 @@ const Index: React.FC = () => {
         .single();
 
       if (error) {
-        console.error('Error adding comment:', error);
         toast({
           title: "Error",
           description: "Failed to add comment",
@@ -79,21 +64,41 @@ const Index: React.FC = () => {
         return;
       }
 
-      console.log('Comment added:', data);
-      setComments(prev => [data, ...prev].slice(0, 30)); // Keep only the latest 30
+      setComments(prev => [data, ...prev]);
       toast({
         title: "Success",
         description: "Your confession has been shared anonymously",
       });
-      fetchConfessionCount();
     } catch (error) {
       console.error('Error adding comment:', error);
     }
   };
 
+  const fetchConfessionCount = async () => {
+    const { count, error } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true });
+
+    if (!error) setConfessionCount(count ?? 0);
+  };
+
   useEffect(() => {
     fetchComments();
     fetchConfessionCount();
+  }, []);
+
+  useEffect(() => {
+    const updateBubbleLimit = () => {
+      if (window.innerWidth < 768) {
+        setBubbleLimit(10); // Mobile
+      } else {
+        setBubbleLimit(20); // Desktop
+      }
+    };
+
+    updateBubbleLimit(); // Set on load
+    window.addEventListener('resize', updateBubbleLimit);
+    return () => window.removeEventListener('resize', updateBubbleLimit);
   }, []);
 
   return (
@@ -102,12 +107,12 @@ const Index: React.FC = () => {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/10 via-purple-900/50 to-slate-900"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-pink-500/5 via-transparent to-transparent"></div>
       <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366F1' fill-opacity='0.05'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='37' cy='17' r='1'/%3E%3Ccircle cx='17' cy='37' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}></div>
-      
+
       {/* Soft floating orbs */}
       <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-indigo-400/10 to-purple-500/10 rounded-full blur-xl animate-pulse"></div>
       <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-r from-purple-500/8 to-pink-400/8 rounded-full blur-2xl animate-pulse delay-1000"></div>
-      
-      {/* Header with Navigation */}
+
+      {/* Header */}
       <div className="relative z-10 text-center pt-8 pb-4">
         <div className="flex justify-end mb-4 px-8">
           <Link to="/comments">
@@ -137,7 +142,7 @@ const Index: React.FC = () => {
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-400/60 shadow-lg shadow-indigo-400/30"></div>
         </div>
       ) : (
-        <FloatingBubbles comments={comments} />
+        <FloatingBubbles comments={comments.slice(0, bubbleLimit)} />
       )}
     </div>
   );
