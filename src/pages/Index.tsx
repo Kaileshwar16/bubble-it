@@ -28,7 +28,7 @@ const Index: React.FC = () => {
         .from('comments')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(20); // <-- Only the most recent 30
+        .limit(15); // <-- Only the most recent 30
 
       if (error) {
         console.error('Error fetching comments:', error);
