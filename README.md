@@ -12,9 +12,8 @@ This project was built with vibes and modern web tools — fast, clean, and styl
 - **Tailwind CSS** – utility-first styling  
 - **shadcn/ui** – beautiful, reusable components
 
-## user 
 
-
+## traffic
 
 ![Screenshot at 18:48:53](public/250602_18h48m53s_screenshot.png)
 ## Achieved 1k requests in 6 hour
