@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import BubbleComment from './BubbleComment';
 import type { Comment } from '../pages/Index';
@@ -11,8 +10,8 @@ interface BubblePosition {
   x: number;
   y: number;
   scale: number;
-  vx: number; // velocity x
-  vy: number; // velocity y
+  vx: number;
+  vy: number;
   radius: number;
 }
 
@@ -21,149 +20,145 @@ const FloatingBubbles: React.FC<FloatingBubblesProps> = ({ comments }) => {
   const animationFrameRef = useRef<number>();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const generateBubblePositions = () => {
-    const positions = comments.map((_, index) => {
-      // Calculate age-based scale (newer comments are larger)
+  // 1. Generate bubble positions and motion values
+  const generateBubblePositions = (): BubblePosition[] => {
+    return comments.map((_, index) => {
       const ageRatio = index / Math.max(comments.length - 1, 1);
       const scale = Math.max(0.6, 1 - ageRatio * 0.4);
-      const radius = 60 * scale; // Base radius of 60px scaled
-      
+      const radius = 60 * scale;
+
       return {
-        x: Math.random() * (80 - 20) + 10, // 10% to 90% of screen width with margin
-        y: Math.random() * (70 - 15) + 15, // 15% to 85% of screen height with margin
+        x: Math.random() * (90 - 10) + 10,  // 10% - 90%
+        y: Math.random() * (85 - 15) + 15,  // 15% - 85%
         scale,
-        vx: (Math.random() - 0.5) * 0.2, // Random velocity between -0.1 and 0.1
-        vy: (Math.random() - 0.5) * 0.2,
-        radius
+        vx: (Math.random() - 0.5) * 0.5,    // increased for more noticeable motion
+        vy: (Math.random() - 0.5) * 0.5,
+        radius,
       };
     });
-    setBubblePositions(positions);
   };
 
-  const checkCollision = (bubble1: BubblePosition, bubble2: BubblePosition, containerWidth: number, containerHeight: number) => {
-    const dx = (bubble1.x / 100 * containerWidth) - (bubble2.x / 100 * containerWidth);
-    const dy = (bubble1.y / 100 * containerHeight) - (bubble2.y / 100 * containerHeight);
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const minDistance = bubble1.radius + bubble2.radius;
-    
-    return distance < minDistance;
+  // 2. Collision detection
+  const checkCollision = (
+    b1: BubblePosition,
+    b2: BubblePosition,
+    width: number,
+    height: number
+  ) => {
+    const dx = (b1.x - b2.x) / 100 * width;
+    const dy = (b1.y - b2.y) / 100 * height;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    return dist < b1.radius + b2.radius;
   };
 
-  const resolveCollision = (bubble1: BubblePosition, bubble2: BubblePosition, containerWidth: number, containerHeight: number) => {
-    const dx = (bubble1.x / 100 * containerWidth) - (bubble2.x / 100 * containerWidth);
-    const dy = (bubble1.y / 100 * containerHeight) - (bubble2.y / 100 * containerHeight);
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    if (distance === 0) return; // Prevent division by zero
-    
-    // Normalize collision vector
-    const nx = dx / distance;
-    const ny = dy / distance;
-    
-    // Separate bubbles
-    const overlap = (bubble1.radius + bubble2.radius) - distance;
-    const separationX = (overlap * 0.5 * nx) / containerWidth * 100;
-    const separationY = (overlap * 0.5 * ny) / containerHeight * 100;
-    
-    bubble1.x += separationX;
-    bubble1.y += separationY;
-    bubble2.x -= separationX;
-    bubble2.y -= separationY;
-    
-    // Apply collision response
-    const bounceStrength = 0.3;
-    bubble1.vx += nx * bounceStrength;
-    bubble1.vy += ny * bounceStrength;
-    bubble2.vx -= nx * bounceStrength;
-    bubble2.vy -= ny * bounceStrength;
+  const resolveCollision = (
+    b1: BubblePosition,
+    b2: BubblePosition,
+    width: number,
+    height: number
+  ) => {
+    const dx = (b1.x - b2.x) / 100 * width;
+    const dy = (b1.y - b2.y) / 100 * height;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist === 0) return;
+
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const overlap = b1.radius + b2.radius - dist;
+    const sepX = (overlap * 0.5 * nx) / width * 100;
+    const sepY = (overlap * 0.5 * ny) / height * 100;
+
+    b1.x += sepX;
+    b1.y += sepY;
+    b2.x -= sepX;
+    b2.y -= sepY;
+
+    const bounce = 0.3;
+    b1.vx += nx * bounce;
+    b1.vy += ny * bounce;
+    b2.vx -= nx * bounce;
+    b2.vy -= ny * bounce;
   };
 
+  // 3. Animate
   const updatePhysics = () => {
     if (!containerRef.current) return;
-    
-    const containerWidth = containerRef.current.offsetWidth;
-    const containerHeight = containerRef.current.offsetHeight;
-    
-    setBubblePositions(prevPositions => {
-      const newPositions = [...prevPositions];
-      
-      // Update positions and apply physics
-      newPositions.forEach((bubble, index) => {
-        // Update position
-        bubble.x += bubble.vx;
-        bubble.y += bubble.vy;
-        
-        // Apply friction
-        bubble.vx *= 0.98;
-        bubble.vy *= 0.98;
-        
-        // Boundary collision
-        const marginX = (bubble.radius / containerWidth) * 100;
-        const marginY = (bubble.radius / containerHeight) * 100;
-        
-        if (bubble.x <= marginX || bubble.x >= 100 - marginX) {
-          bubble.vx *= -0.7;
-          bubble.x = Math.max(marginX, Math.min(100 - marginX, bubble.x));
+    const width = containerRef.current.offsetWidth;
+    const height = containerRef.current.offsetHeight;
+
+    setBubblePositions((prev) => {
+      const next = [...prev];
+      for (let i = 0; i < next.length; i++) {
+        const b = next[i];
+        b.x += b.vx;
+        b.y += b.vy;
+        b.vx *= 0.99;
+        b.vy *= 0.99;
+
+        const marginX = (b.radius / width) * 100;
+        const marginY = (b.radius / height) * 100;
+
+        if (b.x < marginX || b.x > 100 - marginX) {
+          b.vx *= -1;
+          b.x = Math.max(marginX, Math.min(100 - marginX, b.x));
         }
-        
-        if (bubble.y <= marginY || bubble.y >= 100 - marginY) {
-          bubble.vy *= -0.7;
-          bubble.y = Math.max(marginY, Math.min(100 - marginY, bubble.y));
+        if (b.y < marginY || b.y > 100 - marginY) {
+          b.vy *= -1;
+          b.y = Math.max(marginY, Math.min(100 - marginY, b.y));
         }
-        
-        // Check collisions with other bubbles
-        for (let j = index + 1; j < newPositions.length; j++) {
-          if (checkCollision(bubble, newPositions[j], containerWidth, containerHeight)) {
-            resolveCollision(bubble, newPositions[j], containerWidth, containerHeight);
+
+        for (let j = i + 1; j < next.length; j++) {
+          if (checkCollision(b, next[j], width, height)) {
+            resolveCollision(b, next[j], width, height);
           }
         }
-      });
-      
-      return newPositions;
+      }
+      return next;
     });
-    
+
     animationFrameRef.current = requestAnimationFrame(updatePhysics);
   };
 
+  // 4. Start animation
   useEffect(() => {
-    generateBubblePositions();
-  }, [comments]);
+    const initialPositions = generateBubblePositions();
+    setBubblePositions(initialPositions);
 
-  useEffect(() => {
-    if (bubblePositions.length > 0) {
+    // Delay animation by a frame to ensure DOM measures are correct
+    setTimeout(() => {
       animationFrameRef.current = requestAnimationFrame(updatePhysics);
-    }
-    
+    }, 0);
+
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [bubblePositions.length]);
+  }, [comments]);
 
+  // 5. Bubble click impulse
   const handleBubbleClick = (index: number) => {
-    // Add impulse to clicked bubble
-    setBubblePositions(prev => {
-      const newPositions = [...prev];
-      if (newPositions[index]) {
-        newPositions[index].vx += (Math.random() - 0.5) * 0.5;
-        newPositions[index].vy += (Math.random() - 0.5) * 0.5;
+    setBubblePositions((prev) => {
+      const updated = [...prev];
+      if (updated[index]) {
+        updated[index].vx += (Math.random() - 0.5) * 1;
+        updated[index].vy += (Math.random() - 0.5) * 1;
       }
-      return newPositions;
+      return updated;
     });
   };
 
   return (
     <div ref={containerRef} className="relative h-screen w-full overflow-hidden">
       {comments.map((comment, index) => {
-        const position = bubblePositions[index];
-        if (!position) return null;
+        const pos = bubblePositions[index];
+        if (!pos) return null;
 
         return (
           <BubbleComment
             key={comment.id}
             comment={comment}
-            position={position}
+            position={pos}
             onClick={() => handleBubbleClick(index)}
             animationDelay={index * 0.1}
           />
