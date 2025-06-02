@@ -19,7 +19,7 @@ const Index: React.FC = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [confessionCount, setConfessionCount] = useState<number | null>(null);
-  const [bubbleLimit, setBubbleLimit] = useState(20);
+  const [bubbleLimit, setBubbleLimit] = useState(25);
   const { toast } = useToast();
 
   const fetchComments = async () => {
@@ -28,7 +28,7 @@ const Index: React.FC = () => {
         .from('comments')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(30); // Fetch recent 30 to allow filtering by screen size
+        .limit(50);
 
       if (error) {
         toast({
@@ -89,26 +89,24 @@ const Index: React.FC = () => {
 
   useEffect(() => {
     const updateBubbleLimit = () => {
-      if (window.innerWidth < 768) {
-        setBubbleLimit(10); // Mobile
-      } else {
-        setBubbleLimit(20); // Desktop
-      }
+      setBubbleLimit(window.innerWidth < 768 ? 10 : 25);
     };
 
-    updateBubbleLimit(); // Set on load
+    updateBubbleLimit();
     window.addEventListener('resize', updateBubbleLimit);
     return () => window.removeEventListener('resize', updateBubbleLimit);
   }, []);
 
+  const topLevelComments = comments.filter(c => c.parent_id === null);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 relative overflow-hidden">
-      {/* Soft anime-inspired background effects */}
+      {/* Background Effects */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/10 via-purple-900/50 to-slate-900"></div>
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,_var(--tw-gradient-stops))] from-pink-500/5 via-transparent to-transparent"></div>
       <div className="absolute inset-0 opacity-20" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%236366F1' fill-opacity='0.05'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='37' cy='17' r='1'/%3E%3Ccircle cx='17' cy='37' r='1'/%3E%3Ccircle cx='47' cy='47' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}></div>
 
-      {/* Soft floating orbs */}
+      {/* Floating Orbs */}
       <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-r from-indigo-400/10 to-purple-500/10 rounded-full blur-xl animate-pulse"></div>
       <div className="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-r from-purple-500/8 to-pink-400/8 rounded-full blur-2xl animate-pulse delay-1000"></div>
 
@@ -142,7 +140,7 @@ const Index: React.FC = () => {
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-400/60 shadow-lg shadow-indigo-400/30"></div>
         </div>
       ) : (
-        <FloatingBubbles comments={comments.slice(0, bubbleLimit)} />
+        <FloatingBubbles comments={topLevelComments.slice(0, bubbleLimit)} />
       )}
     </div>
   );
