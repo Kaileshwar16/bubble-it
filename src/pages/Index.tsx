@@ -107,7 +107,7 @@ const Index: React.FC = () => {
           </Link>
         </div>
         <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-2 drop-shadow-lg">
-          Bubble Confessions
+          SRM Confessions
         </h1>
         <p className="text-indigo-200/70 text-lg drop-shadow-sm">Share your thoughts anonymously in floating bubbles</p>
       </div>
