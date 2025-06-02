@@ -18,7 +18,6 @@ export interface Comment {
 const Index: React.FC = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [confessionCount, setConfessionCount] = useState<number | null>(null); // <-- Add this
   const { toast } = useToast();
 
   const fetchComments = async () => {
@@ -27,7 +26,8 @@ const Index: React.FC = () => {
       const { data, error } = await supabase
         .from('comments')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(15); // <-- Only the most recent 30
 
       if (error) {
         console.error('Error fetching comments:', error);
@@ -88,6 +88,14 @@ const Index: React.FC = () => {
     }
   };
 
+  const fetchConfessionCount = async () => {
+    const { count, error } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true });
+
+    if (!error) setConfessionCount(count ?? 0);
+  };
+
   useEffect(() => {
     console.log('Index component mounted, fetching comments...');
     fetchComments();
@@ -120,12 +128,6 @@ const Index: React.FC = () => {
         <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-indigo-300 via-purple-300 to-pink-300 bg-clip-text text-transparent mb-2 drop-shadow-lg">
           SRM Confessions
         </h1>
-        {/* Show confession count */}
-        <p className="text-indigo-200/70 text-lg drop-shadow-sm">
-          {confessionCount !== null
-            ? `${confessionCount} confessions shared`
-            : 'Loading confessions count...'}
-        </p>
         <p className="text-indigo-200/70 text-lg drop-shadow-sm">Share your thoughts anonymously in floating bubbles</p>
       </div>
 
