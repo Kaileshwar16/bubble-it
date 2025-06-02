@@ -27,7 +27,8 @@ const Index: React.FC = () => {
       const { data, error } = await supabase
         .from('comments')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20); // <-- Only the most recent 30
 
       if (error) {
         console.error('Error fetching comments:', error);
