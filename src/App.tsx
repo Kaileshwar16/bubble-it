@@ -30,7 +30,7 @@ const App = () => (
 export default App;
 
 {/* 
-  remove trace - lovable
+  
   theme 
   motion to bubble
 */}
