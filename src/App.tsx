@@ -20,8 +20,6 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/comments" element={<Comments />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-{/* pikachu */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
@@ -30,3 +28,9 @@ const App = () => (
 );
 
 export default App;
+
+{/* 
+  remove trace - lovable
+  theme 
+  motion to bubble
+*/}
