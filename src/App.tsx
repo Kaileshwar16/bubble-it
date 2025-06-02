@@ -21,7 +21,7 @@ const App = () => (
           <Route path="/comments" element={<Comments />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-
+{/* pikachu */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
