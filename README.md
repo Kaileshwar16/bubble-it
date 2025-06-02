@@ -19,4 +19,5 @@ user
 
 ![Screenshot at 18:48:53](public/250602_18h48m53s_screenshot.png)
 
-![Screenshot at 18:50:08](public/250602_18h50m08s_screenshot.png)
+Achieved 1k user in 6 hour
+![Screenshot at 18:50:08](public/1kuser.png)
