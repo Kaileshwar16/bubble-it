@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +29,7 @@ const BubbleComment: React.FC<BubbleCommentProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [replies, setReplies] = useState<Comment[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
+  const [replyCount, setReplyCount] = useState<number>(0);
 
   const handleBubbleClick = () => {
     setIsOpen(true);
@@ -59,6 +59,21 @@ const BubbleComment: React.FC<BubbleCommentProps> = ({
       setLoadingReplies(false);
     }
   };
+
+  // Fetch reply count for the bubble badge
+  useEffect(() => {
+    const fetchReplyCount = async () => {
+      const { count, error } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('parent_id', comment.id);
+
+      if (!error && typeof count === 'number') {
+        setReplyCount(count);
+      }
+    };
+    fetchReplyCount();
+  }, [comment.id]);
 
   useEffect(() => {
     if (isOpen) {
@@ -104,7 +119,10 @@ const BubbleComment: React.FC<BubbleCommentProps> = ({
                 {comment.title}
               </p>
               
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-gradient-to-r from-indigo-400/80 to-purple-400/80 rounded-full animate-pulse shadow-lg shadow-indigo-400/30"></div>
+              {/* Reply count badge */}
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 flex items-center justify-center bg-gradient-to-r from-indigo-400/80 to-purple-400/80 rounded-full shadow-lg shadow-indigo-400/30 border-2 border-slate-900/70 text-xs font-bold text-white select-none">
+                {replyCount}
+              </div>
               <div className="absolute top-1 right-3 w-1 h-1 bg-purple-300/80 rounded-full animate-ping opacity-60"></div>
             </div>
           </div>
@@ -133,7 +151,7 @@ const BubbleComment: React.FC<BubbleCommentProps> = ({
           {/* Replies Section */}
           <div className="border-t border-indigo-500/20 pt-4">
             <h3 className="text-lg font-semibold text-indigo-200 mb-3">
-              Replies ({replies.length})
+              Replies ({replyCount})
             </h3>
             
             {loadingReplies ? (
