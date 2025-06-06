@@ -22,13 +22,14 @@ const Index: React.FC = () => {
   const [bubbleLimit, setBubbleLimit] = useState(25);
   const { toast } = useToast();
 
-  const fetchComments = async () => {
+  const fetchTopLevelComments = async () => {
     try {
       const { data, error } = await supabase
         .from('comments')
         .select('*')
+        .is('parent_id', null) // ✅ Only parent comments
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100); 
 
       if (error) {
         toast({
@@ -83,21 +84,19 @@ const Index: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchComments();
+    fetchTopLevelComments();
     fetchConfessionCount();
   }, []);
 
   useEffect(() => {
     const updateBubbleLimit = () => {
-      setBubbleLimit(window.innerWidth < 768 ? 10 : 25);
+      setBubbleLimit(window.innerWidth < 768 ? 10 : 25); // ✅ Adjust based on screen
     };
 
     updateBubbleLimit();
     window.addEventListener('resize', updateBubbleLimit);
     return () => window.removeEventListener('resize', updateBubbleLimit);
   }, []);
-
-  const topLevelComments = comments.filter(c => c.parent_id === null);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 relative overflow-hidden">
@@ -140,7 +139,7 @@ const Index: React.FC = () => {
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-400/60 shadow-lg shadow-indigo-400/30"></div>
         </div>
       ) : (
-        <FloatingBubbles comments={topLevelComments.slice(0, bubbleLimit)} />
+        <FloatingBubbles comments={comments.slice(0, bubbleLimit)} />
       )}
     </div>
   );
