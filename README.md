@@ -1,6 +1,5 @@
-# Welcome to My Vibe-Coded Project ✨
 
-This project was built with vibes and modern web tools — fast, clean, and stylish.
+modern web  — fast, clean, and stylish.
 
 ## 🚀 Tech Stack
 
