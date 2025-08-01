@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Comment } from '../pages/Index';
 import ReplyForm from './ReplyForm';
 
+
 interface BubblePosition {
   x: number;
   y: number;
