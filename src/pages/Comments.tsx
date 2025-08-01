@@ -18,7 +18,6 @@ const Comments: React.FC = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-
   const fetchComments = async () => {
     try {
       console.log('Fetching all comments...');
