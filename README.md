@@ -14,7 +14,4 @@ modern web  — fast, clean, and stylish.
 
 ## traffic
 
-![Screenshot at 18:48:53](public/250602_18h48m53s_screenshot.png)
-## Achieved 1k requests in 2 hour
-----------------------
-![Screenshot at 18:50:08](public/1kuser.png)
+![Screenshot](public/screenshot-2025-11-22_18-02-45.png)
